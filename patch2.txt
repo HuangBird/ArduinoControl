@@ -1,0 +1,100 @@
+diff -u Pressure_PID_v3/Pressure_PID.ino Pressure_PID_V4/Pressure_PID.ino
+--- Pressure_PID_v3/Pressure_PID.ino	2018-02-04 21:28:43.282693000 -0800
++++ Pressure_PID_V4/Pressure_PID.ino	2018-02-04 21:28:43.282693000 -0800
+@@ -5,6 +5,13 @@
+ // the input. Using a constant rather than a normal variable lets us use this
+ // value to determine the size of the readings array.
+ const int numReadings = 10;
++const float setPressure[3] = {0.0, 5.0, 8.0};
++
++// initialize variables for time control part
++double time_last = 0.0;
++double time_total = 0.0;
++double time_inc = 0.0; 
++int start_point = 0;
+ 
+ int readings[numReadings];      // the readings from the analog input
+ int readIndex = 0;              // the index of the current reading
+@@ -21,7 +28,7 @@
+ double output;
+ 
+ // Set PID parameters
+-double Kp=0.1, Ki=10.0, Kd=0.01;
++double Kp=1.0, Ki=10.0, Kd=0.01;
+ 
+ // Create PID instances
+ PID myPID(&input, &output, &setPoint, Kp, Ki, Kd, DIRECT);
+@@ -38,6 +45,11 @@
+   // set up communication parameters
+   Serial.begin(9600);
+ 
++  // setup the first pressure input here 
++  setPoint = setPressure[0];
++  // Hardcode setpoint
++  // setPoint = 12.0; // set pressure (psi)
++
+   // initialize all the readings to 0:
+   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+     readings[thisReading] = 0;
+@@ -46,9 +58,6 @@
+   // turn on PID control
+   myPID.SetMode(AUTOMATIC);
+   myPID.SetOutputLimits(0,255); // Set output limit
+-
+-  // Hardcode setpoint
+-  setPoint = 8.0; // set pressure (psi)
+   
+   //Set up PID control parameters
+   myPID.SetTunings(Kp,Ki,Kd);
+@@ -93,6 +102,16 @@
+ }
+ 
+ void loop() {
++  //
++  time_inc = millis()- time_last; 
++  time_total += time_inc;
++
++  if ( 710.0 - time_total <= 10.0 ){ // If time elasped longer than 5s
++    time_total = 0.0;
++    start_point = (start_point + 1)%3 ;
++    setPoint = setPressure[start_point];
++  }
++  
+   // clear settings of previous loop
+   potDC1 = 0; potDC2 = 0; potDC3 = 0; potDC4 = 0;
+   
+@@ -135,14 +154,13 @@
+     // Assume pressure depends on duty cycle settings linearly
+     // Transform readings from pressure sensor to duty cylce number based on relation between pressure and duty cycles
+     { potDC1 = (float)output/255 * 100.0; }
+-    //{ potDC1 = 50.0; }
+   if (digitalRead(51) == HIGH) { potDC2 = analogRead(A2)*100.0/1024.0; }
+   if (digitalRead(52) == HIGH) { potDC3 = analogRead(A3)*100.0/1024.0; }
+   if (digitalRead(53) == HIGH) { potDC4 = analogRead(A4)*100.0/1024.0; }
+ 
+   // Set up PWM prequency from A7 pin
+-   // float potPWMfq = analogRead(A7)*100.0/1024.0; // scale values from pot to 0 to 100, which gets used for frequency (Hz)
+-   // potPWMfq = round(potPWMfq/5)*5+1; //1 to 91 Hz in increments of 5 (rounding helps to deal with noisy pot)
++  // float potPWMfq = analogRead(A7)*100.0/1024.0; // scale values from pot to 0 to 100, which gets used for frequency (Hz)
++  // potPWMfq = round(potPWMfq/5)*5+1; //1 to 91 Hz in increments of 5 (rounding helps to deal with noisy pot)
+   float potPWMfq = 91.0;
+   
+   // update PWM output based on the values calculated from PID control
+@@ -151,11 +169,15 @@
+   // print pressure readings
+   // Serial.print(P1); Serial.print("\t");
+   Serial.print(average); Serial.print("\t");
++  // Serial.print(time_total/1000.0); Serial.print("\t");
++  // Serial.print(start_point); Serial.print("\t");
+   Serial.print(setPoint); Serial.print("\n");
+   //Serial.print(potDC1); Serial.print("\n");
+   // Serial.print(P2); Serial.print("\t");
+   // Serial.print(P3); Serial.print("\t");
+   // Serial.print(P4); Serial.print("\n");
+-
+-  delay(1); // Delay for better sensor reading 
++  
++  time_last = millis(); 
++  delay(1); // Delay for better sensor reading  
+ }
++
