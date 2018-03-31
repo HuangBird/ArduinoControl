@@ -64,12 +64,12 @@ void pPWM(float pwmfreq, float pwmDC1, float pwmDC2, float pwmDC3, float pwmDC4,
   ICR4 = F_CPU / (prescaler * pwmfreq * 2);
   
   // set duty cycles
-  OCR3B = (ICR3) * (pwmDC5 * 0.01);
-  OCR3C = (ICR3) * (pwmDC6 * 0.01);
-  OCR3A = (ICR3) * (pwmDC1 * 0.01);
-  OCR4A = (ICR4) * (pwmDC2 * 0.01);
-  OCR4B = (ICR4) * (pwmDC3 * 0.01);
-  OCR4C = (ICR4) * (pwmDC4 * 0.01);
+  OCR3B = (ICR3) * (pwmDC1 * 0.01);
+  OCR3C = (ICR3) * (pwmDC2 * 0.01);
+  OCR3A = (ICR3) * (pwmDC3 * 0.01);
+  OCR4A = (ICR4) * (pwmDC4 * 0.01);
+  OCR4B = (ICR4) * (pwmDC5 * 0.01);
+  OCR4C = (ICR4) * (pwmDC6 * 0.01);
   OCR1A = (ICR1) * (pwmDC7 * 0.01);
   OCR1B = (ICR1) * (pwmDC8 * 0.01);
 }
